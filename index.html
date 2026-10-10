@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Result Portal (Demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1b2a41;
+    --muted: #5b6678;
+    --paper: #f5f6f8;
+    --card: #ffffff;
+    --line: #d8dde4;
+    --accent: #0e7c86;
+    --accent-dark: #0a5f67;
+    --error: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.5;
+  }
+  .hidden { display: none !important; }
+
+  /* Login */
+  .login-wrap { min-height: 100%; display: grid; place-items: center; padding: 24px; }
+  .login-card {
+    width: 100%; max-width: 400px; background: var(--card);
+    border: 1px solid var(--line); border-top: 4px solid var(--accent);
+    border-radius: 6px; padding: 32px 28px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+  .brand svg { flex: none; }
+  .brand span { font-weight: 600; font-size: 1.05rem; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: var(--muted); margin: 0 0 22px; font-size: .95rem; }
+  label { display: block; font-size: .9rem; font-weight: 500; margin: 14px 0 6px; }
+  input[type=text], input[type=password] {
+    width: 100%; padding: 11px 12px; font: inherit; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 4px; background: #fff;
+  }
+  input:focus-visible, button:focus-visible, select:focus-visible {
+    outline: 3px solid rgba(14,124,134,.35); outline-offset: 1px; border-color: var(--accent);
+  }
+  .btn {
+    width: 100%; margin-top: 22px; padding: 12px; font: inherit; font-weight: 600;
+    color: #fff; background: var(--accent); border: 0; border-radius: 4px; cursor: pointer;
+  }
+  .btn:hover { background: var(--accent-dark); }
+  .error { color: var(--error); font-size: .9rem; margin: 12px 0 0; min-height: 1.3em; }
+  .note { margin-top: 18px; font-size: .8rem; color: var(--muted); text-align: center; }
+
+  /* App */
+  header.top {
+    background: var(--ink); color: #fff; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  header.top .brand { margin: 0; }
+  .logout {
+    background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5);
+    padding: 7px 14px; border-radius: 4px; font: inherit; cursor: pointer;
+  }
+  .logout:hover { background: rgba(255,255,255,.12); }
+  main { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 22px 24px; margin-bottom: 22px;
+  }
+  .panel h2 { margin: 0 0 14px; font-size: 1.15rem; font-weight: 600; }
+  dl.info { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+  dl.info dt { color: var(--muted); }
+  dl.info dd { margin: 0; font-weight: 500; }
+  .picker { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+  .picker div { flex: 1 1 240px; }
+  .picker label { margin-top: 0; }
+  select {
+    width: 100%; padding: 11px 12px; font: inherit; border: 1px solid var(--line);
+    border-radius: 4px; background: #fff; color: var(--ink);
+  }
+  .picker .btn { width: auto; margin: 0; padding: 11px 26px; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  th, td { padding: 11px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-weight: 600; font-size: .9rem; color: var(--muted); border-bottom: 2px solid var(--ink); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tfoot td { font-weight: 600; border-bottom: 0; }
+  .empty { color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 0 20px 28px; }
+  @media (max-width: 520px) {
+    .login-card { padding: 26px 20px; }
+    dl.info { grid-template-columns: 1fr; gap: 0; }
+    dl.info dd { margin-bottom: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Login ===== -->
+<section id="login" class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <rect width="34" height="34" rx="7" fill="#0e7c86"/>
+        <path d="M9 24V10h6.2c3.2 0 5.1 1.7 5.1 4.3 0 2.6-1.9 4.3-5.1 4.3H12.5V24H9zm3.5-8.3h2.5c1.2 0 1.9-.6 1.9-1.4s-.7-1.4-1.9-1.4h-2.5v2.8z" fill="#fff"/>
+        <rect x="21" y="19" width="4" height="5" fill="#fff"/>
+      </svg>
+      <span>Result Portal</span>
+    </div>
+    <h1>Sign in</h1>
+    <p class="sub">Enter your ID and password to see your result.</p>
+    <form id="loginForm" onsubmit="return false;">
+      <label for="uid">Student ID</label>
+      <input id="uid" type="text" autocomplete="username" required>
+      <label for="pwd">Password</label>
+      <input id="pwd" type="password" autocomplete="current-password" required>
+      <p id="err" class="error" role="alert"></p>
+      <button class="btn" type="submit" id="signin">Sign in</button>
+    </form>
+    <p class="note">Demo project</p>
+  </div>
+</section>
+
+<!-- ===== App ===== -->
+<section id="app" class="hidden">
+  <header class="top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true">
+        <rect width="34" height="34" rx="7" fill="#0e7c86"/>
+        <path d="M9 24V10h6.2c3.2 0 5.1 1.7 5.1 4.3 0 2.6-1.9 4.3-5.1 4.3H12.5V24H9zm3.5-8.3h2.5c1.2 0 1.9-.6 1.9-1.4s-.7-1.4-1.9-1.4h-2.5v2.8z" fill="#fff"/>
+        <rect x="21" y="19" width="4" height="5" fill="#fff"/>
+      </svg>
+      <span>Result Portal</span>
+    </div>
+    <button class="logout" id="logout">Log out</button>
+  </header>
+
+  <main>
+    <div class="panel">
+      <h2>Student information</h2>
+      <dl class="info">
+        <dt>Name</dt><dd id="sName"></dd>
+        <dt>Program</dt><dd id="sProgram"></dd>
+        <dt>Batch</dt><dd id="sBatch"></dd>
+        <dt>Student ID</dt><dd id="sId"></dd>
+      </dl>
+    </div>
+
+    <div class="panel">
+      <h2>Academic result</h2>
+      <div class="picker">
+        <div>
+          <label for="semester">Select semester</label>
+          <select id="semester"></select>
+        </div>
+        <button class="btn" id="search">Search</button>
+      </div>
+    </div>
+
+    <div class="panel" id="resultPanel">
+      <h2 id="resultTitle">Result</h2>
+      <p class="empty" id="resultEmpty">Select a semester and press Search.</p>
+      <div class="table-scroll hidden" id="tableWrap">
+        <table>
+          <thead>
+            <tr><th>SL</th><th>Course code</th><th>Course title</th><th class="num">Credit</th><th>Grade</th><th class="num">Grade point</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+          <tfoot>
+            <tr><td colspan="3">Total credit and SGPA</td><td class="num" id="totCredit"></td><td>SGPA</td><td class="num" id="sgpa"></td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </main>
+  <footer>Demo project &middot; not an official transcript</footer>
+</section>
+
+<script>
+/* =========================================================
+   EDIT THIS PART
+   ========================================================= */
+const ACCOUNT = {
+  id: "student01",          // login ID  (change this)
+  password: "demo1234"      // login password (change this)
+};
+
+const STUDENT = {
+  name: "Md. Minhazur Rahman Mim",
+  program: "B.Sc. in Computer Science & Engineering",
+  batch: "64",
+  id: "student01"
+};
+
+/* Newest first. Add or remove semesters here. "sgpa" is optional: if left out, it is calculated. */
+const RESULTS = {
+  "summer2026": {
+    label: "Summer 2026 (262)",
+    courses: [
+      { code: "CSE432", title: "Natural Language Processing", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE431", title: "Machine Learning", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "ECO426", title: "Engineering Economics", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE438", title: "Business Intelligence", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "fall2025": {
+    label: "Fall 2025 (253)",
+    courses: [
+      { code: "CSE323", title: "Operating Systems", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE315", title: "Software Engineering", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE316", title: "Artificial Intelligence", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE324", title: "Operating Systems Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE328", title: "Introduction to Data Science", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "summer2025": {
+    label: "Summer 2025 (252)",
+    courses: [
+      { code: "STA101", title: "Statistics and Probability", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE317", title: "Microprocessor and Microcontrollers", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE313", title: "Compiler Design", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE314", title: "Compiler Design Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE413", title: "Computer Architecture and Organization", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "spring2025": {
+    label: "Spring 2025 (251)",
+    courses: [
+      { code: "CSE311", title: "Database Management System", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE321", title: "Computer Networks", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE322", title: "Computer Networks Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE312", title: "Database Management System Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "ACT327", title: "Financial and Managerial Accounting", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "fall2024": {
+    label: "Fall 2024 (243)",
+    courses: [
+      { code: "CSE221", title: "Object Oriented Programming", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE224", title: "Digital Logic Design Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE222", title: "Object Oriented Programming Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE223", title: "Digital Logic Design", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE228", title: "Theory of Computation", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE225", title: "Data Communication", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE227", title: "Systems Analysis and Design", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE226", title: "Numerical Methods", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "spring2024": {
+    label: "Spring 2024 (241)",
+    courses: [
+      { code: "MAT211", title: "Engineering Mathematics", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "BNS101", title: "Bangladesh Studies (History of Independence and Contemporary Issues)", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE213", title: "Algorithms", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE212", title: "Discrete Mathematics", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE214", title: "Algorithms Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE215", title: "Electronic Devices and Circuits", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE216", title: "Electronic Devices and Circuits Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "AOL101", title: "Art of Living", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "fall2023": {
+    label: "Fall 2023 (233)",
+    sgpa: "3.98",
+    courses: [
+      { code: "PHY102", title: "Physics-II", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "MAT102", title: "Mathematics-II: Calculus, Complex Variables and Linear Algebra", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "ENG102", title: "Writing and Comprehension", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE123", title: "Data Structure", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE122", title: "Electrical Circuits Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "PHY103", title: "Physics-II Lab", credit: 1.50, grade: "A+", point: 4.00 },
+      { code: "CSE124", title: "Data Structure Lab", credit: 1.50, grade: "A", point: 3.75 },
+      { code: "CSE121", title: "Electrical Circuits", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  },
+  "spring2023": {
+    label: "Spring 2023 (231)",
+    sgpa: "3.81",
+    courses: [
+      { code: "ENG101", title: "Basic Functional English and English Spoken", credit: 3.00, grade: "A-", point: 3.50 },
+      { code: "CSE115", title: "Introduction to Biology and Chemistry for Computation", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE113", title: "Programming and Problem Solving", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "CSE112", title: "Computer Fundamentals", credit: 3.00, grade: "A+", point: 4.00 },
+      { code: "MAT101", title: "Mathematics-I", credit: 3.00, grade: "A-", point: 3.50 },
+      { code: "CSE114", title: "Programming and Problem Solving Lab", credit: 1.50, grade: "A", point: 3.75 },
+      { code: "PHY101", title: "Physics-I", credit: 3.00, grade: "A+", point: 4.00 }
+    ]
+  }
+};
+/* ========================================================= */
+
+const $ = id => document.getElementById(id);
+const SESSION_KEY = "result_demo_logged_in";
+
+function showApp() {
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("sName").textContent = STUDENT.name;
+  $("sProgram").textContent = STUDENT.program;
+  $("sBatch").textContent = STUDENT.batch;
+  $("sId").textContent = STUDENT.id;
+
+  const sel = $("semester");
+  sel.innerHTML = '<option value="">Select semester</option>';
+  Object.keys(RESULTS).forEach(k => {
+    const o = document.createElement("option");
+    o.value = k; o.textContent = RESULTS[k].label;
+    sel.appendChild(o);
+  });
+}
+
+function showLogin() {
+  $("app").classList.add("hidden");
+  $("login").classList.remove("hidden");
+  $("pwd").value = "";
+}
+
+$("loginForm").addEventListener("submit", () => {
+  const id = $("uid").value.trim();
+  const pw = $("pwd").value;
+  if (id === ACCOUNT.id && pw === ACCOUNT.password) {
+    $("err").textContent = "";
+    try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (e) {}
+    showApp();
+  } else {
+    $("err").textContent = "ID or password is incorrect. Check both and try again.";
+  }
+});
+
+$("logout").addEventListener("click", () => {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  $("uid").value = "";
+  showLogin();
+});
+
+$("search").addEventListener("click", () => {
+  const key = $("semester").value;
+  const data = RESULTS[key];
+  if (!data) {
+    $("resultEmpty").classList.remove("hidden");
+    $("resultEmpty").textContent = "Choose a semester first, then press Search.";
+    $("tableWrap").classList.add("hidden");
+    $("resultTitle").textContent = "Result";
+    return;
+  }
+  $("resultTitle").textContent = data.label;
+  $("resultEmpty").classList.add("hidden");
+  $("tableWrap").classList.remove("hidden");
+
+  const tbody = $("rows");
+  tbody.innerHTML = "";
+  let totalCredit = 0, totalPoints = 0;
+  data.courses.forEach((c, i) => {
+    totalCredit += c.credit;
+    totalPoints += c.credit * c.point;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i + 1}</td><td>${c.code}</td><td>${c.title}</td>
+      <td class="num">${c.credit.toFixed(2)}</td><td>${c.grade}</td><td class="num">${c.point.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+  $("totCredit").textContent = totalCredit.toFixed(2);
+  $("sgpa").textContent = data.sgpa || (totalPoints / totalCredit).toFixed(2);
+});
+
+try { if (sessionStorage.getItem(SESSION_KEY) === "1") showApp(); } catch (e) {}
+</script>
+</body>
+</html>
